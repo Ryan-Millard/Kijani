@@ -9,9 +9,10 @@
 #include <WiFi.h>
 #include <LittleFS.h>
 #include <ESPAsyncWebServer.h>
+#include <Update.h>
 
-#define version "kijani_v3.00b"
-#define versiondate "2025-05-23"
+#define version "kijani_v3.01b"
+#define versiondate "2025-05-27"
 
 Preferences preferences;
 AsyncWebServer server(80);
@@ -625,7 +626,40 @@ void setup()
                   Serial.println(p->value());
                 }
               } });
+  server.on("/updatefirmware", HTTP_POST, [](AsyncWebServerRequest *request)
+            {
+    // this is called after upload finishes
+    ledcWrite(MotorA1, 0);
+    ledcWrite(MotorB1, 0);
+    request->send(200, "text/plain", "Update complete. Rebooting...");
+    delay(500);
+    ESP.restart(); },
 
+            [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
+            {
+
+    if (index == 0) {
+      Serial.println("OTA Update Start");
+
+      if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+        Update.printError(Serial);
+        return;
+      }
+    }
+
+    if (len) {
+      if (Update.write(data, len) != len) {
+        Update.printError(Serial);
+      }
+    }
+
+    if (final) {
+      if (Update.end(true)) {
+        Serial.println("OTA Success");
+      } else {
+        Update.printError(Serial);
+      }
+    } });
   // endpoint to factory reset all settings
   server.on("/reset", HTTP_ANY, [](AsyncWebServerRequest *request)
             {
@@ -684,7 +718,7 @@ void setup()
 
     // Otherwise, redirect to the homepage
     request->redirect("/"); });
-  
+
   loadsettings();
   Serial.println("AP mode started");
   WiFi.mode(WIFI_AP);
@@ -708,7 +742,7 @@ void setup()
   }
   // dnsServer.start(53, "*", WiFi.softAPIP());
 
-  //TODO: impliment factory reset
+  // TODO: impliment factory reset
 
   server.begin();
 }

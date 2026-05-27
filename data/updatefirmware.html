@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Firmware Update</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #111;
+    color: white;
+    text-align: center;
+    padding: 40px;
+}
+
+.box {
+    border: 2px dashed #00C853;
+    padding: 40px;
+    border-radius: 12px;
+    width: 300px;
+    margin: auto;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: #00C853;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h2>⚡ Firmware Update</h2>
+
+<div class="box">
+    <input type="file" id="fileInput" accept=".bin">
+    <br>
+    <button onclick="upload()">Upload Firmware</button>
+</div>
+
+<p id="status"></p>
+
+<script>
+
+function upload() {
+
+    let file = document.getElementById("fileInput").files[0];
+
+    if (!file) {
+        alert("Select firmware.bin first");
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append("file", file);
+
+    document.getElementById("status").innerText = "Uploading...";
+
+    fetch("/updatefirmware", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.text())
+    .then(txt => {
+        document.getElementById("status").innerText = txt;
+    })
+    .catch(err => {
+        document.getElementById("status").innerText = "Error: " + err;
+    });
+}
+
+</script>
+
+</body>
+</html>
