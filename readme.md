@@ -1,0 +1,373 @@
+# Kijani Battle Bot Platform
+
+![Kijani Logo](images/logo.png)
+
+An open-source ESP32-based battle robot platform designed for affordable combat robots, educational robotics, and custom remote-controlled projects.
+
+Built for:
+- Battle bots
+- Rover projects
+- Educational robotics
+- Rapid prototyping
+- Custom web-controlled robots
+
+---
+
+# 📸 Project Photos
+
+## Example Robot
+![Example Robot](images/robot.jpg)
+
+## PCB Front
+![PCB Front](images/pcb_front.jpg)
+
+## PCB Back
+![PCB Back](images/pcb_back.jpg)
+
+## Web Control Interface
+![Web UI](images/webui.jpg)
+
+---
+
+# ✨ Features
+
+- ESP32-based controller
+- Dual DC motor outputs
+- Two servo outputs
+- Built-in LiPo charging
+- WiFi access point
+- Browser-based control
+- Custom HTML/JavaScript interfaces
+- LittleFS web hosting
+- USB programming/debugging
+- Open HTTP API
+- File upload and management system
+- Fully customizable control interface
+
+---
+
+# 🎯 Project Goals
+
+The Kijani project was created to make combat robotics:
+
+- Cheaper
+- Easier to build
+- Easier to customise
+- More accessible to beginners
+
+Instead of needing many separate modules, Kijani combines:
+
+- Motor drivers
+- Charging circuitry
+- Control electronics
+- WiFi hosting
+- Filesystem hosting
+
+onto a single compact PCB.
+
+---
+
+# 🛠 Hardware Overview
+
+The PCB includes:
+
+| Component | Function |
+|---|---|
+| ESP32 | Main processor |
+| CH340 | USB programming |
+| Dual motor drivers | Drive control |
+| Servo outputs | Servo control |
+| Boost regulator | Optional higher voltage |
+| LiPo charger | Single-cell charging |
+| LittleFS | Web interface storage |
+
+---
+
+# 🤖 Typical Robot Configurations
+
+- Flipper bot
+- Spinner bot
+- Differential drive robot
+- Steering servo robot
+- Educational robot
+- Experimental robotics platform
+
+---
+
+# 🔋 Supported Batteries
+
+## Recommended
+- 1S LiPo (3.7V nominal) / 18650
+
+## Typical Capacities
+- 300mAh
+- 500mAh
+- 850mAh
+- 1000mAh
+
+---
+
+# ⚙ Recommended Motors
+
+## Drive Motors
+Recommended:
+- N20 gear motors
+- Micro metal gear motors
+- TT motors (lightweight robots only)
+
+## Recommended Voltage
+- 3V–6V
+
+## Recommended Current
+- Under 1A continuous per motor
+
+---
+
+# ⚠ Important Warnings
+
+## Servo Voltage Warning
+
+The boost regulator can output voltages higher than some servos can tolerate.
+
+Always verify:
+- Servo voltage rating
+- Regulator configuration
+- Battery voltage
+
+before enabling boost mode.
+
+Incorrect voltage can permanently damage servos.
+
+---
+
+## LiPo Safety
+
+LiPo batteries can be dangerous if:
+- Punctured
+- Short-circuited
+- Overcharged
+- Physically damaged
+
+Always:
+- Supervise charging
+- Inspect batteries regularly
+- Use correct polarity
+- Remove damaged batteries immediately
+
+---
+
+# 💻 Software Architecture
+
+The project consists of two main parts.
+
+---
+
+## ESP32 Firmware
+
+Written using:
+- C++
+- Arduino Framework
+- PlatformIO
+
+Handles:
+- Motor control
+- WiFi
+- API
+- Settings storage
+- Telemetry
+- Filesystem management
+
+---
+
+## Web Interface
+
+Stored directly on the ESP32 using LittleFS.
+
+Written using:
+- HTML
+- CSS
+- JavaScript
+
+Allows:
+- Custom control pages
+- Telemetry dashboards
+- Robot configuration
+- Mobile phone control
+
+---
+
+# 🌐 API Features
+
+The built-in HTTP API supports:
+
+- Motor control
+- Servo control
+- Live telemetry
+- Settings management
+- Filesystem browsing
+- File uploads
+- File deletion
+
+This allows users to create fully custom control systems.
+
+---
+
+# 🚀 Quick Start
+
+## 1. Clone Repository
+
+```bash
+git clone https://github.com/zaplakkies/kijani.git
+```
+
+---
+
+## 2. Open in VSCode
+
+Install:
+- VSCode
+- PlatformIO extension
+
+
+## 3. Open Web Interface
+
+Connect to the Mootbot wifi acces point. Open browser and navigate to:
+
+```text
+http://10.10.10.10
+```
+
+---
+
+# 📁 Repository Structure
+
+```text
+/src      ESP32 source code
+/data          Web interface files
+/hardware      PCB files and schematics
+/documentation Documentation
+/images        Photos and screenshots
+```
+
+---
+
+# 📚 Documentation
+
+| Document | Description |
+|---|---|
+| docs/API.md | HTTP API documentation |
+| docs/USER_GUIDE.md | User manual |
+| docs/HARDWARE.md | PCB and wiring |
+| docs/TROUBLESHOOTING.md | Common problems |
+| docs/BUILD_GUIDE.md | Building a robot |
+
+---
+
+# 🔧 Development Tools
+
+| Tool | Purpose |
+|---|---|
+| VSCode | Development |
+| PlatformIO | Firmware upload |
+| EasyEDA | PCB editing |
+| LittleFS Upload | Web interface upload |
+
+---
+
+# 🧪 Factory Reset
+
+If the password is forgotten:
+
+1. Power off the board
+2. Short the PGM pins
+3. Power on the board
+4. Listen for the factory reset tune
+
+The board will:
+- Erase stored settings
+- Restore defaults
+
+---
+
+# 📡 Example API Request
+
+Drive both motors forward:
+
+```http
+/processcontrol?M1=255&M2=255
+```
+
+Move servo:
+
+```http
+/processcontrol?S1=90
+```
+
+Read telemetry:
+
+```http
+/quickstatus
+```
+
+---
+
+# 🛣 Roadmap
+
+Planned future features:
+- WebSocket low-latency control
+- OTA firmware updates
+- Competition management tools
+- Multi-weapon support
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+Ideas:
+- Bug fixes
+- UI improvements
+- Documentation
+- Robot designs
+- API improvements
+- Hardware improvements
+
+
+---
+
+# 🙏 Credits
+
+Original Author:
+Marc d'Hotman de Villiers
+
+Inspired by:
+- Combat robotics
+- Rover Moot projects
+- Open-source robotics communities
+
+---
+
+# 🔗 Links
+
+## PCB Files
+[PLACEHOLDER_EASYEDA_LINK]
+
+## Rover moot
+[https://www.scouts.org.za/2africascoutmoot/]
+
+## Videos
+[PLACEHOLDER_YOUTUBE]
+
+---
+
+# ⭐ Support The Project
+
+If you build something using Kijani:
+- Share photos
+- Share videos
+- Submit improvements
+- Open pull requests
+- Help improve documentation
+
+---

@@ -1,0 +1,224 @@
+Battle Bot ESP32 API Guide
+Base Address
+
+All API routes are hosted on the ESP32 web server.
+
+Example:
+
+http://10.10.10.10/
+
+Control API
+/processcontrol
+
+Controls motors and servos.
+
+Method
+GET
+Parameters
+Parameter	Range	Description
+M1	-255 to 255	Motor 1 speed and direction
+M2	-255 to 255	Motor 2 speed and direction
+S1	0 to 180	Servo 1 position
+S2	0 to 180	Servo 2 position
+Motor Direction
+Value	Action
+Positive	Forward
+Negative	Reverse
+0	Stop
+
+Values between -5 and 5 are treated as zero.
+
+Examples
+Drive forward
+/processcontrol?M1=255&M2=255
+Turn left
+/processcontrol?M1=-255&M2=255
+Stop motors
+/processcontrol?M1=0&M2=0
+Move servo
+/processcontrol?S1=90
+Combined request
+/processcontrol?M1=120&M2=120&S1=45
+Response
+done
+Telemetry API
+/quickstatus
+
+Returns live battery voltage and internal temperature.
+
+Method
+GET
+Response
+{
+  "result":"pass",
+  "vIn":4.82,
+  "temperature":31.25
+}
+Battery Charging Detection
+
+If:
+
+vIn > 4.5V
+
+then the unit is considered charging.
+
+Settings API
+/getsettings
+
+Returns a stored setting value.
+
+Method
+GET
+Parameters
+Parameter	Description
+key	Setting key
+Example
+/getsettings?key=AP
+Response
+{
+  "result":"pass",
+  "key":"AP",
+  "value":"BattleBot"
+}
+Update Settings API
+/updatesettings
+
+Updates a stored setting.
+
+Method
+GET
+Parameters
+Parameter	Description
+key	Setting key
+value	New value
+Example
+/updatesettings?key=AP&value=BattleBot
+Response
+Updated successfully
+File System API
+/files
+
+Returns all files stored on the ESP32 filesystem.
+
+Method
+GET
+Response Example
+{
+  "used":123456,
+  "total":1048576,
+  "files":[
+    {
+      "id":0,
+      "name":"index.html",
+      "size":1024
+    },
+    {
+      "id":1,
+      "name":"control.html",
+      "size":4096
+    }
+  ]
+}
+Upload API
+/upload
+
+Uploads files to the ESP32 filesystem.
+
+Method
+POST
+Multipart Form Field
+file
+Example HTML
+<form action="/upload" method="POST" enctype="multipart/form-data">
+  <input type="file" name="file">
+  <input type="submit">
+</form>
+Delete File API
+/delete
+
+Deletes a file from the filesystem.
+
+Method
+GET
+Parameters
+Parameter	Description
+file	Filename
+Example
+/delete?file=index.html
+Response
+Deleted
+System Information API
+/systeminfo
+
+Returns system information as HTML.
+
+Includes
+free RAM
+filesystem usage
+MAC address
+uptime
+flash size
+firmware version
+battery voltage
+temperature
+Version API
+/getver
+
+Returns firmware version string.
+
+Example Response
+ver:kijaniv1
+Factory Reset API
+/reset
+
+Factory resets the unit.
+
+Method
+GET
+Parameters
+Parameter	Description
+factory_reset	Required
+Example
+/reset?factory_reset=1
+Static File Hosting
+
+The ESP32 serves all files stored in LittleFS.
+
+Example:
+
+/index.html
+/control.html
+/loading.gif
+/style.css
+Recommended Frontend Design
+
+Custom interfaces can be built using:
+
+HTML
+CSS
+JavaScript
+Fetch API
+Mobile touch controls
+Virtual joysticks
+
+Recommended update rates:
+
+API	Recommended Rate
+/processcontrol	10–20 Hz
+/quickstatus	1–2 Hz
+Notes
+All settings are stored as strings.
+Files uploaded with the same name overwrite existing files.
+No authentication is currently enabled.
+API is intended for local network use.
+
+A few recommendations before publishing this:
+
+1. Change HTTP_ANY
+
+Most of these should become:
+
+HTTP_GET
+HTTP_POST
+
+This improves compatibility and security.

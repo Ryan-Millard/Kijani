@@ -1,0 +1,293 @@
+.container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 220px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.icon {
+    font-size: 40px;
+}
+
+.value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+.small {
+    color: #666;
+    margin-top: 5px;
+}
+
+.gauge {
+    height: 12px;
+    background: #ddd;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.fill {
+    height: 100%;
+    width: 0%;
+    background: green;
+    transition: width 0.3s;
+}
+
+.charging {
+    color: orange;
+    font-weight: bold;
+}
+
+.normal {
+    color: #333;
+}
+.table-container {
+  width: 100%;
+  /* Or any other width you prefer */
+  overflow-x: auto;
+  /* Enables horizontal scrolling */
+}
+
+.table-content {
+  width: 90%;
+  /* Ensures the table takes up its full width */
+  border-collapse: collapse;
+  /* Optional: removes gaps between table borders */
+}
+
+/* Style the header with a grey background and some padding */
+.header {
+  overflow: hidden;
+  background-color: #f1f1f1;
+  padding: 20px 10px;
+}
+
+/* Style the header links */
+.header a {
+  float: left;
+  color: black;
+  text-align: center;
+  padding: 12px;
+  text-decoration: none;
+  font-size: 18px;
+  line-height: 25px;
+  border-radius: 4px;
+}
+
+/* Style the logo link (notice that we set the same value of line-height and font-size to prevent the header to increase when the font gets bigger */
+.header a.logo {
+  font-size: 25px;
+  font-weight: bold;
+  color: #223266;
+}
+
+/* Change the background color on mouse-over */
+.header a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+/* Style the active/current link*/
+.header a.active {
+  background-color: #618cc8;
+  color: white;
+}
+
+/* Float the link section to the right */
+.header-right {
+  float: right;
+}
+
+
+h2 {
+  width: 80vw;
+}
+
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 95vw;
+  overflow: auto;
+  margin: 0 auto 0 auto;
+
+}
+
+body {
+  overflow-x: none;
+}
+
+td,
+th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+button,
+input[type=submit] {
+  display: inline-block;
+  border: none;
+  padding: 1rem 2rem;
+  margin: 0;
+  text-decoration: none;
+  background: #f47920;
+  color: #ffffff;
+  font-family: sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+button:hover,
+button:focus {
+  background: #555;
+}
+
+button:focus {
+  outline: 1px solid #fff;
+  outline-offset: -4px;
+}
+
+button:active {
+  transform: scale(0.99);
+}
+
+/* The Modal (background) */
+.modal {
+  display: none;
+  /* Hidden by default */
+  position: fixed;
+  /* Stay in place */
+  z-index: 1;
+  /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%;
+  /* Full width */
+  height: 100%;
+  /* Full height */
+  overflow: none;
+  /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0);
+  /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4);
+  /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tablebutton {
+  margin-left: 5px;
+}
+
+/*Settings*/
+.spacing {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  font-size: large;
+}
+
+.inputStyle {
+  height: 20px;
+  width: 80%;
+}
+#pagination {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+.page-button,
+button {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    background-color: #f47920;
+    cursor: pointer;
+}
+
+.page-button:hover,
+button:hover:not(:disabled) {
+    background-color: #e0e0e0;
+}
+
+button:disabled {
+    background-color: #d3d3d3;
+    cursor: not-allowed;
+}
+
+.current-page {
+    background-color: #618cc8;
+    color: white;
+    border-color: #618cc8;
+    cursor: default;
+}
+/* On screens that are less than 700px wide, make the sidebar into a topbar */
+@media screen and (max-width: 700px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+
+  .sidebar a {
+    float: left;
+  }
+
+  div.content {
+    margin-left: 0;
+  }
+
+  .header a {
+    float: none;
+    display: block;
+    text-align: left;
+  }
+
+  .header-right {
+    float: none;
+  }
+
+  .sidebar a {
+    text-align: center;
+    float: none;
+  }
+}

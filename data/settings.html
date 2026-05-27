@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    function toggleEdit(key) {
+      const valueField = document.getElementById(key + "-value");
+      const editField = document.getElementById(key + "-edit");
+      const editButton = document.getElementById(`edit-${key}`);
+      const saveButton = document.getElementById(`save-${key}`);
+
+      // Toggle visibility of the value and edit fields
+      valueField.style.display = "none"; // Hide current value
+      editField.style.display = "inline"; // Show edit field
+      editField.focus(); // Focus on the edit field
+      editButton.style.display = "none"; // Hide edit button
+      saveButton.style.display = "inline"; // Show save button
+    }
+
+    function updateSetting(key) {
+      const valueField = document.getElementById(key + "-edit");
+      const value = valueField.value;
+
+      fetch('/updatesettings?key=' + key + '&value=' + encodeURIComponent(value))
+        .then(response => response.text())
+        .then(data => {
+          console.log(data);
+          location.reload(); // Reload the page to show updated values
+        });
+    }
+  </script>
+</head>
+
+<body>
+
+  <div class="header">
+    <a href="index.html" class="logo"><img src="logo.png" alt="Mootbot">Mootbot control interface</a>
+    <div id="ver"></div>
+    <div class="header-right">
+      <a href="index.html">Home</a>
+      <a class="active" href="settings.html">Settings</a>
+      <a href="test.html">test interface</a>
+    </div>
+    <!-- Battery -->
+    <div class="card">
+      <div class="icon" id="batteryIcon">🔋</div>
+      <div class="value" id="batteryValue">-- V</div>
+
+      <div class="gauge">
+        <div class="fill" id="batteryBar"></div>
+      </div>
+
+      <div class="small" id="batteryState">--</div>
+    </div>
+
+    <!-- Temperature -->
+    <div class="card">
+      <div class="icon">🌡️</div>
+      <div class="value" id="tempValue">-- °C</div>
+      <div class="small">Internal Temp</div>
+    </div>
+
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const verDiv = document.getElementById('ver');
+      fetch('/getver')
+        .then(response => response.text())
+        .then(html => {
+          // Insert fetched HTML into the div
+          verDiv.innerHTML = html;
+        });
+    });
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    async function update() {
+
+      try {
+        const res = await fetch('/quickstatus');
+        const data = await res.json();
+
+        let v = data.vIn;
+        let temp = data.temperature;
+
+        // ===== Battery display =====
+        document.getElementById("batteryValue").innerText =
+          v.toFixed(2) + " V";
+
+        // Gauge mapping (assume 3V–6V range)
+        let percent = ((v - 3.5) / (4.2 - 3.5)) * 100;
+        percent = clamp(percent, 0, 100);
+
+        document.getElementById("batteryBar").style.width =
+          percent + "%";
+
+        // Color logic
+        let bar = document.getElementById("batteryBar");
+
+        if (percent < 25) bar.style.background = "red";
+        else if (percent < 60) bar.style.background = "orange";
+        else bar.style.background = "green";
+
+        // Charging logic
+        let icon = document.getElementById("batteryIcon");
+        let state = document.getElementById("batteryState");
+
+        if (v > 4.5) {
+          icon.innerText = "⚡🔋";
+          state.innerText = "Charging";
+          state.className = "charging";
+        } else {
+          icon.innerText = "🔋";
+          state.innerText = "On battery";
+          state.className = "normal";
+        }
+
+        // ===== Temperature =====
+        document.getElementById("tempValue").innerText =
+          temp.toFixed(1) + " °C";
+
+      } catch (e) {
+        console.log("update failed", e);
+      }
+    }
+
+    update();
+    setInterval(update, 3000);
+  </script>
+  <h2>System Information</h2>
+  <div id="info-content">
+    <img src="loading.gif" alt="Loading..." id="loading">
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const infoContentDiv = document.getElementById('info-content');
+      const loadingElement = document.getElementById('loading');
+
+      // Show loading GIF
+      loadingElement.style.display = 'block';
+
+      fetch('/systeminfo')
+        .then(response => response.text())
+        .then(html => {
+          // Hide loading GIF
+          loadingElement.style.display = 'none';
+
+          // Insert fetched HTML into the div
+          infoContentDiv.innerHTML = html;
+        })
+        .catch(error => {
+          // Hide loading GIF
+          loadingElement.style.display = 'none';
+
+          // Display error message
+          infoContentDiv.innerHTML = '<div class="error">Error fetching information: ' + error + '</div>';
+        });
+    });
+  </script>
+  <h2>Settings on this system</h2>
+  <table id="wifi-settings-table">
+    <tr>
+      <th>Setting</th>
+      <th>Value</th>
+      <th>Action</th>
+    </tr>
+
+
+    <tr>
+      <td>This device AP</td>
+      <td>
+        <span id="AP-value">Unknown</span>
+        <input type="text" id="AP-edit" value="" maxlength="60" style="display:none;">
+      </td>
+      <td>
+        <button id="edit-AP" onclick="toggleEdit('AP')">Edit</button>
+        <button id="save-AP" onclick="updateSetting('AP')" style="display:none;">Save</button>
+      </td>
+    </tr>
+    <tr>
+      <td>This device APpass</td>
+      <td>
+        <span id="APpass-value">Unknown</span>
+        <input type="text" id="APpass-edit" value="" maxlength="30" style="display:none;">
+      </td>
+      <td>
+        <button id="edit-APpass" onclick="toggleEdit('APpass')">Edit</button>
+        <button id="save-APpass" onclick="updateSetting('APpass')" style="display:none;">Save</button>
+      </td>
+    </tr>
+
+  </table>
+
+
+  <script>
+
+    async function loadSetting(key) {
+      const res = await fetch('/getsettings?key=' + encodeURIComponent(key));
+      const data = await res.json();
+
+      return data.value;
+    }
+
+    async function loadSettings() {
+
+      const AP = await loadSetting("AP");
+      const APpass = await loadSetting("APpass");
+
+      document.getElementById("AP-value").innerText = AP;
+      document.getElementById("APpass-value").innerText = APpass;
+
+      document.getElementById("AP-edit").value = AP;
+      document.getElementById("APpass-edit").value = APpass;
+    }
+
+    loadSettings();
+
+  </script>
+
+</body>
+
+</html>
