@@ -15,10 +15,10 @@ Built for:
 # 📸 Project Photos
 
 ## PCB Front
-![PCB Front](images/pcbv2explination.jpg)
+![PCB Front](images/pcbv2explination.png)
 
 ## PCB Back
-![PCB Back](images/pcbv2bot.jpg)
+![PCB Back](images/pcbv2bot.png)
 
 ---
 
