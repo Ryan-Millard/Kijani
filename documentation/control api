@@ -209,16 +209,6 @@ API	Recommended Rate
 Notes
 All settings are stored as strings.
 Files uploaded with the same name overwrite existing files.
-No authentication is currently enabled.
-API is intended for local network use.
 
-A few recommendations before publishing this:
 
-1. Change HTTP_ANY
-
-Most of these should become:
-
-HTTP_GET
-HTTP_POST
-
-This improves compatibility and security.
+view the control. html or test.html files as examples

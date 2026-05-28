@@ -783,11 +783,3 @@ void loop()
   // }
   // delay(10);
 }
-
-// notes on the web interface
-// colours, #618cc8, #f47920, #ececec, #223266
-// Header for different sections
-// index, file list, see info on files and can delete them and add files and download the files
-// system info
-// test page, test all functionmality
-//

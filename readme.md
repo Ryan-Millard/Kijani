@@ -1,12 +1,11 @@
 # Kijani Battle Bot Platform
 
-![Kijani Logo](images/logo.png)
+![Kijani Logo](images/portratclose.png)
 
 An open-source ESP32-based battle robot platform designed for affordable combat robots, educational robotics, and custom remote-controlled projects.
 
 Built for:
 - Battle bots
-- Rover projects
 - Educational robotics
 - Rapid prototyping
 - Custom web-controlled robots
@@ -15,17 +14,11 @@ Built for:
 
 # 📸 Project Photos
 
-## Example Robot
-![Example Robot](images/robot.jpg)
-
 ## PCB Front
-![PCB Front](images/pcb_front.jpg)
+![PCB Front](images/pcbv2explination.jpg)
 
 ## PCB Back
-![PCB Back](images/pcb_back.jpg)
-
-## Web Control Interface
-![Web UI](images/webui.jpg)
+![PCB Back](images/pcbv2bot.jpg)
 
 ---
 
@@ -97,13 +90,9 @@ The PCB includes:
 # 🔋 Supported Batteries
 
 ## Recommended
-- 1S LiPo (3.7V nominal) / 18650
-
-## Typical Capacities
-- 300mAh
-- 500mAh
-- 850mAh
-- 1000mAh
+- 1S LiPo (3.7V nominal)
+- 18650 type battery
+- 2x AA batteries, just dont try charge them
 
 ---
 
@@ -227,7 +216,8 @@ git clone https://github.com/zaplakkies/kijani.git
 Install:
 - VSCode
 - PlatformIO extension
-
+- plug in the board
+- Program
 
 ## 3. Open Web Interface
 
@@ -251,18 +241,6 @@ http://10.10.10.10
 
 ---
 
-# 📚 Documentation
-
-| Document | Description |
-|---|---|
-| docs/API.md | HTTP API documentation |
-| docs/USER_GUIDE.md | User manual |
-| docs/HARDWARE.md | PCB and wiring |
-| docs/TROUBLESHOOTING.md | Common problems |
-| docs/BUILD_GUIDE.md | Building a robot |
-
----
-
 # 🔧 Development Tools
 
 | Tool | Purpose |
@@ -270,7 +248,6 @@ http://10.10.10.10
 | VSCode | Development |
 | PlatformIO | Firmware upload |
 | EasyEDA | PCB editing |
-| LittleFS Upload | Web interface upload |
 
 ---
 
@@ -309,13 +286,13 @@ Read telemetry:
 /quickstatus
 ```
 
+see the api docs for more information
 ---
 
 # 🛣 Roadmap
 
 Planned future features:
 - WebSocket low-latency control
-- OTA firmware updates
 - Competition management tools
 - Multi-weapon support
 
@@ -343,7 +320,7 @@ Marc d'Hotman de Villiers
 
 Inspired by:
 - Combat robotics
-- Rover Moot projects
+- Rover Moot project
 - Open-source robotics communities
 
 ---
@@ -354,7 +331,7 @@ Inspired by:
 [PLACEHOLDER_EASYEDA_LINK]
 
 ## Rover moot
-[https://www.scouts.org.za/2africascoutmoot/]
+https://www.scouts.org.za/2africascoutmoot/
 
 ## Videos
 [PLACEHOLDER_YOUTUBE]
