@@ -11,6 +11,15 @@ Built for:
 - Custom web-controlled robots
 
 ---
+# Order a bot?
+
+Do you want a bot? If there are enough people in your area I will organise a big buy and ship to you. Please fill out the google form so we know what interest is in what areas. We will look at the results in august and contact everyone who filled in the form as well as possibly make an order form here. We estimate the full kit will be around R600 for a bot with assembled pcb, battery n20 motors and servo
+
+https://docs.google.com/forms/d/e/1FAIpQLSefcmKqDehQRFsC9WDCJS6LWhJCRrktLrYrf-59QBeeA0L29w/viewform?usp=publish-editor
+
+When Ive done with V3 of the board I will also make a link available on easyeda so you can order dirctly from them if you wish. you will however I think you will need to buy a minimum of 5 from there.
+
+---
 
 # 📸 Project Photos
 
