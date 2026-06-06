@@ -11,8 +11,8 @@
 #include <ESPAsyncWebServer.h>
 #include <Update.h>
 
-#define version "kijani_v3.01b"
-#define versiondate "2025-05-27"
+#define version "kijani_v3.02b"
+#define versiondate "2025-06-02"
 
 Preferences preferences;
 AsyncWebServer server(80);
@@ -231,7 +231,172 @@ void playTone(int frequency, int duration_ms)
   digitalWrite(MotorA1, LOW);
   digitalWrite(MotorA2, LOW);
 }
+void playRTTTL(const char *p)
+{
+  int default_dur = 4;
+  int default_oct = 6;
+  int bpm = 63;
 
+  // Skip name
+  while (*p && *p != ':')
+    p++;
+  if (*p == ':')
+    p++;
+  ledcDetach(MotorA1);
+  pinMode(MotorA1, OUTPUT);
+  // Parse defaults
+  while (*p && *p != ':')
+  {
+    if (*p == 'd')
+    {
+      p += 2;
+      default_dur = atoi(p);
+    }
+    else if (*p == 'o')
+    {
+      p += 2;
+      default_oct = atoi(p);
+    }
+    else if (*p == 'b')
+    {
+      p += 2;
+      bpm = atoi(p);
+    }
+
+    while (*p && *p != ',')
+    {
+      if (*p == ':')
+        break;
+      p++;
+    }
+
+    if (*p == ',')
+      p++;
+  }
+
+  if (*p == ':')
+    p++;
+
+  int wholenote = (60 * 1000L / bpm) * 4;
+
+  while (*p)
+  {
+    int duration = 0;
+
+    if (isdigit(*p))
+    {
+      duration = atoi(p);
+
+      while (isdigit(*p))
+        p++;
+    }
+
+    if (duration == 0)
+      duration = default_dur;
+
+    duration = wholenote / duration;
+
+    int note = 0;
+
+    switch (*p)
+    {
+    case 'c':
+      note = 1;
+      break;
+    case 'd':
+      note = 3;
+      break;
+    case 'e':
+      note = 5;
+      break;
+    case 'f':
+      note = 6;
+      break;
+    case 'g':
+      note = 8;
+      break;
+    case 'a':
+      note = 10;
+      break;
+    case 'b':
+      note = 12;
+      break;
+    case 'p':
+      note = 0;
+      break;
+    }
+
+    p++;
+
+    if (*p == '#')
+    {
+      note++;
+      p++;
+    }
+
+    if (*p == '.')
+    {
+      duration += duration / 2;
+      p++;
+    }
+
+    int octave = default_oct;
+
+    if (isdigit(*p))
+    {
+      octave = *p - '0';
+      p++;
+    }
+
+    if (*p == ',')
+      p++;
+
+    if (note == 0)
+    {
+      delay(duration);
+      continue;
+    }
+
+    static const float noteTable[] =
+        {
+            0,
+            261.63, // C
+            277.18,
+            293.66, // D
+            311.13,
+            329.63, // E
+            349.23, // F
+            369.99,
+            392.00, // G
+            415.30,
+            440.00, // A
+            466.16,
+            493.88 // B
+        };
+
+    float freq = noteTable[note];
+
+    while (octave > 4)
+    {
+      freq *= 2;
+      octave--;
+    }
+
+    while (octave < 4)
+    {
+      freq /= 2;
+      octave++;
+    }
+    Serial.print(freq);
+    Serial.print(" ");
+    Serial.println(duration);
+    
+    playTone((int)freq, duration);
+
+    delay(duration / 10);
+  }
+  ledcAttach(MotorA1, 5000, 8);
+}
 void setup()
 {
   // setup the debug out comms
@@ -280,29 +445,23 @@ void setup()
   digitalWrite(en5v, HIGH);
   digitalWrite(dvrsleep, HIGH);
 
-  // TODO: change to rtttle and add as setting so users can change the tone
-  playTone(987, 300);  // 8b: B (987 Hz) for 300 ms
-  playTone(1175, 150); // 16d6: D6 (1175 Hz) for 150 ms
-  playTone(1047, 150); // 16c6: C6 (1047 Hz) for 150 ms
-  playTone(1319, 300); // 8e6: E6 (1319 Hz) for 300 ms
-
   ESP32PWM::allocateTimer(0);
   ESP32PWM::allocateTimer(1);
   ESP32PWM::allocateTimer(2);
   ESP32PWM::allocateTimer(3);
 
-  Serial.println("2");
   servo1.setPeriodHertz(50); // Standard 50hz servo
-  Serial.println("3");
   servo2.setPeriodHertz(50); // Standard 50hz servo
-  Serial.println("4");
 
   servo1.attach(servo1Pin, minUs, maxUs);
-  Serial.println("5");
   servo2.attach(servo2Pin, minUs, maxUs);
-  Serial.println("6");
   ledcAttach(MotorA1, 5000, 8);
   ledcAttach(MotorB1, 5000, 8);
+
+  // playTone(987, 300);  // 8b: B (987 Hz) for 300 ms
+  // playTone(1175, 150); // 16d6: D6 (1175 Hz) for 150 ms
+  // playTone(1047, 150); // 16c6: C6 (1047 Hz) for 150 ms
+  // playTone(1319, 300); // 8e6: E6 (1319 Hz) for 300 ms
 
   if (!LittleFS.begin(true))
   {
@@ -720,6 +879,19 @@ void setup()
     request->redirect("/"); });
 
   loadsettings();
+
+  // // const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
+  // // TODO: change to rtttle and add as setting so users can change the tone
+  // playTone(987, 300);  // 8b: B (987 Hz) for 300 ms
+  // playTone(1175, 150); // 16d6: D6 (1175 Hz) for 150 ms
+  // playTone(1047, 150); // 16c6: C6 (1047 Hz) for 150 ms
+  // playTone(1319, 300); // 8e6: E6 (1319 Hz) for 300 ms
+
+  const char *startup4 =
+      "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
+
+  playRTTTL(startup4);
+
   Serial.println("AP mode started");
   WiFi.mode(WIFI_AP);
 
