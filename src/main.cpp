@@ -48,6 +48,7 @@ float temperature = 0;
 String unitcode = "000000";
 String AP = "Mootbot"; // default ssid for our AP
 String APpass = "";    // default password for our
+float calibrationFactor = 5.02 / 213.0;
 
 boolean paired = false;
 String receivedData = "";
@@ -110,6 +111,11 @@ void storesetting(String value, String key)
   // add to eventlog and auditlog
   // sendsettings();
   Serial.println("finished stopring");
+}
+int getbattery()
+{
+  int adcValue = analogRead(36);
+  return adcValue * calibrationFactor * 1000;
 }
 void processItem(const String &item)
 {
@@ -191,19 +197,15 @@ void processItem(const String &item)
     digitalWrite(MotorA2, LOW);
     digitalWrite(MotorB2, LOW);
   }
-  else if (name == "connected")
-  {
-    Serial.print("connected to: ");
-    Serial.println(value);
-    int adcValue = analogRead(36);
-    int vIn = adcValue * 22.5;
-  }
+
   else
   {
     Serial.println("Unknown name: " + name);
     Serial.println("got: " + item);
   }
+  
 }
+
 void setMotorSpeed(int speed, int direction)
 {
   speed = constrain(speed, 0, 255); // Limit speed to valid range
@@ -413,6 +415,12 @@ void setup()
   Serial.print(", ");
   Serial.println(versiondate);
 
+  for (;;){
+    Serial.println(getbattery());
+    delay(1000);
+  }
+  
+
   // init io's
   pinMode(BUILTIN_LED, OUTPUT);
   pinMode(en8v, OUTPUT);
@@ -428,18 +436,12 @@ void setup()
   pinMode(MotorB2, OUTPUT);
   pinMode(pgm, INPUT);
 
-  int adcValue = analogRead(36); // Read the raw ADC value (0-4095)
-
-  // // Calculate the input voltage (Vin) using the voltage divider formula
-  // TODO: make this a setting to make a calibration value
-  int vIn = adcValue * 22.5;
-
-  // // ---- Read Internal Temperature ----
+  // // // ---- Read Internal Temperature ----
   float temperature = temperatureRead(); // Read internal temperature (in °C)
 
   // ---- Print Results ----
   Serial.print("Input Voltage: ");
-  Serial.print(vIn);
+  Serial.print(getbattery()/1000);
   Serial.println("V");
 
   Serial.print("Internal Temperature: ");
@@ -724,7 +726,7 @@ void setup()
                   <tr> <td> Uptime </td><td>" + String(uptime) + " seconds</td> </tr>\
                   <tr> <td> Flash Chip Size </td><td>" + String(flashChipSize / (1024 * 1024)) + " MB</td> </tr>\
                   <tr> <td> Firmware virsion </td><td>" versiondate "</td> </tr>\
-                  <tr> <td> battvoltage </td><td>" + analogRead(36)*22.5 + "</td> </tr>\
+                  <tr> <td> battvoltage </td><td>" + getbattery()/1000 + "</td> </tr>\
                   <tr> <td> temperature </td><td>" + (int)temperatureRead() + "</td> </tr>\
                 </tbody>\
     </table>\
@@ -733,10 +735,9 @@ void setup()
               request->send(200, "text/html", resp.c_str()); });
   server.on("/quickstatus", HTTP_ANY, [](AsyncWebServerRequest *request)
             {
-              int adcValue = analogRead(36); // Read the raw ADC value (0-4095)
-                // TODO: make this a setting to make a calibration value
+
               // int vIn = adcValue * 22.5;
-              float vIn = (adcValue * 22.5)/1000;
+              float vIn = (getbattery())/1000;
               // float vIn = adcValue * 3.3 / 4095.0 * 11.0;
               // // ---- Read Internal Temperature ----
               float temperature = temperatureRead(); // Read internal temperature (in °C)
@@ -891,15 +892,6 @@ void setup()
     // Otherwise, redirect to the homepage
     request->redirect("/"); });
 
-  
-
-  // // const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
-  // // TODO: change to rtttle and add as setting so users can change the tone
-  // playTone(987, 300);  // 8b: B (987 Hz) for 300 ms
-  // playTone(1175, 150); // 16d6: D6 (1175 Hz) for 150 ms
-  // playTone(1047, 150); // 16c6: C6 (1047 Hz) for 150 ms
-  // playTone(1319, 300); // 8e6: E6 (1319 Hz) for 300 ms
-
   const char *startup4 =
       "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
 
@@ -940,6 +932,15 @@ void setup()
 // bool direction;
 void loop()
 {
+
+  //if we are charging we should not move the motors
+  if (getbattery()>1500) {
+    ledcWrite(MotorA1, 0);
+    ledcWrite(MotorB1, 0);
+    digitalWrite(MotorA2, LOW);
+    digitalWrite(MotorB2, LOW);
+  }
+
 
   // testing the hardware
   //  servo1.write(abs(speed/2));
