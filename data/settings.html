@@ -162,62 +162,88 @@
     });
   </script>
   <h2>Settings on this system</h2>
-  <table id="wifi-settings-table">
+  <table id="settingsTable">
     <tr>
       <th>Setting</th>
       <th>Value</th>
       <th>Action</th>
     </tr>
-
-
-    <tr>
-      <td>This device AP</td>
-      <td>
-        <span id="AP-value">Unknown</span>
-        <input type="text" id="AP-edit" value="" maxlength="60" style="display:none;">
-      </td>
-      <td>
-        <button id="edit-AP" onclick="toggleEdit('AP')">Edit</button>
-        <button id="save-AP" onclick="updateSetting('AP')" style="display:none;">Save</button>
-      </td>
-    </tr>
-    <tr>
-      <td>This device APpass</td>
-      <td>
-        <span id="APpass-value">Unknown</span>
-        <input type="text" id="APpass-edit" value="" maxlength="30" style="display:none;">
-      </td>
-      <td>
-        <button id="edit-APpass" onclick="toggleEdit('APpass')">Edit</button>
-        <button id="save-APpass" onclick="updateSetting('APpass')" style="display:none;">Save</button>
-      </td>
-    </tr>
-
   </table>
 
 
   <script>
-
-    async function loadSetting(key) {
-      const res = await fetch('/getsettings?key=' + encodeURIComponent(key));
-      const data = await res.json();
-
-      return data.value;
+    async function loadSetting(key) { 
+      const res = await fetch('/getsettings?key=' + encodeURIComponent(key)); 
+      const data = await res.json(); 
+      return data.value; 
     }
+    const settings = [
+      {
+        key: "AP",
+        label: "This Device AP",
+        maxlength: 60
+      },
+      {
+        key: "APpass",
+        label: "This Device Password",
+        maxlength: 30
+      },
+      {
+        key: "batteryCalibrationFactor",
+        label: "Battery Calibration",
+        maxlength: 20
+      },
+      {
+        key: "startupTune",
+        label: "Startup Tune",
+        maxlength: 200
+      }
+    ];
+    function createSettingsTable() {
+      const table = document.getElementById("settingsTable");
 
+      settings.forEach(setting => {
+
+        table.innerHTML += `
+      <tr>
+        <td>${setting.label}</td>
+        <td>
+          <span id="${setting.key}-value">Loading...</span>
+          <input
+            type="text"
+            id="${setting.key}-edit"
+            maxlength="${setting.maxlength}"
+            style="display:none;">
+        </td>
+        <td>
+          <button id="edit-${setting.key}"
+                  onclick="toggleEdit('${setting.key}')">
+            Edit
+          </button>
+
+          <button id="save-${setting.key}"
+                  onclick="updateSetting('${setting.key}')"
+                  style="display:none;">
+            Save
+          </button>
+        </td>
+      </tr>
+    `;
+      });
+    }
     async function loadSettings() {
 
-      const AP = await loadSetting("AP");
-      const APpass = await loadSetting("APpass");
+      for (const setting of settings) {
 
-      document.getElementById("AP-value").innerText = AP;
-      document.getElementById("APpass-value").innerText = APpass;
+        const value = await loadSetting(setting.key);
 
-      document.getElementById("AP-edit").value = AP;
-      document.getElementById("APpass-edit").value = APpass;
+        document.getElementById(setting.key + "-value").innerText = value;
+        document.getElementById(setting.key + "-edit").value = value;
+      }
     }
-
+    createSettingsTable();
     loadSettings();
+
 
   </script>
 
