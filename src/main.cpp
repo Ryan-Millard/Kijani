@@ -45,7 +45,7 @@ TaskHandle_t Task2; // radio tasks
 
 float battvoltage = 0;
 float temperature = 0;
-String unitcode = "000000";
+// String unitcode = "000000";
 String AP = "Mootbot"; // default ssid for our AP
 String APpass = "";    // default password for our
 float calibrationFactor = 5.02 / 213.0;
@@ -53,7 +53,7 @@ float calibrationFactor = 5.02 / 213.0;
 boolean paired = false;
 String receivedData = "";
 
-// const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
+String startup = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
 // // const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
 // const char *factoryreset = "we-rock:d=4,o=6,b=45:16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32a#.6,32g#.6,32f#.6,16f.6,32f.6,16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32f#.6,32f.6,32d.6,16d#.6,32d#.6,";
 const char *testbutton = "SouthAfr:d=16,o=5,b=100:8g,8g,8g,8a,4b,4b,4a,4a,4g,4p,8b,8b,8b,8b,4c6,4c6,8b,8b,4b,4a,4p,8g,8g,8g,8a,4b,4b,4a,4c6,4b,4p,4a,4p,4g,4p,8f#,8g,4a,4g";
@@ -88,10 +88,17 @@ String Hex2Str(char din)
 void loadsettings()
 {
   preferences.begin("settings", true);
-  unitcode = preferences.getString("unitcode", unitcode);
+  // unitcode = preferences.getString("unitcode", unitcode);
   AP = preferences.getString("AP", AP);
   APpass = preferences.getString("APpass", APpass);
-
+  startup = preferences.getString(
+        "startupTune",
+        "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6");
+  String temp = preferences.getString(
+    "batteryCalibrationFactor",
+    "0.02352");
+  calibrationFactor = temp.toFloat();  
+    
   preferences.end();
 }
 
@@ -390,9 +397,9 @@ void playRTTTL(const char *p)
       freq /= 2;
       octave++;
     }
-    Serial.print(freq);
-    Serial.print(" ");
-    Serial.println(duration);
+    // Serial.print(freq);
+    // Serial.print(" ");
+    // Serial.println(duration);
     
     playTone((int)freq, duration);
 
@@ -415,10 +422,10 @@ void setup()
   Serial.print(", ");
   Serial.println(versiondate);
 
-  for (;;){
-    Serial.println(getbattery());
-    delay(1000);
-  }
+  // for (;;){
+  //   Serial.println(getbattery());
+  //   delay(1000);
+  // }
   
 
   // init io's
@@ -441,7 +448,7 @@ void setup()
 
   // ---- Print Results ----
   Serial.print("Input Voltage: ");
-  Serial.print(getbattery()/1000);
+  Serial.print(float(getbattery())/1000);
   Serial.println("V");
 
   Serial.print("Internal Temperature: ");
@@ -495,7 +502,7 @@ void setup()
   char suffix[7];
   sprintf(suffix, "%06X", (uint32_t)(chipid & 0xFFFFFF));
 
-  String AP = "MootBot_" + String(suffix);
+  AP = "MootBot_" + String(suffix);
 
   // Serial.println(apName);
   // macAddress.replace(":", ""); // Remove colons for a cleaner name (optional)
@@ -691,8 +698,12 @@ void setup()
               size_t usedBytes = LittleFS.usedBytes();
 
               // Get WiFi info
-              String macAddress = WiFi.macAddress();
+              // String macAddress = WiFi.macAddress();
+                uint64_t chipid = ESP.getEfuseMac();
 
+              char suffix[7];
+              sprintf(suffix, "%06X", (uint32_t)(chipid & 0xFFFFFF));
+              String macAddress = String(suffix);
               // Get uptime
               uint32_t uptime = millis() / 1000;
 
@@ -709,7 +720,7 @@ void setup()
                 case FM_SLOW_READ: flashChipMode = "SLOW_READ"; break;
                 default: flashChipMode = "UNKNOWN"; break;
               }
-  
+              //<tr> <td> UnitCode/Serial </td><td>" + unitcode + "</td> </tr>
               String resp = "<div style='margin-left:auto; margin-right:auto;'>\
                 <table id='wifi-settings-table'>\
                   <thead>\
@@ -719,14 +730,13 @@ void setup()
                   </tr>\
                 </thead>\
                 <tbody>\
-                  <tr> <td> UnitCode/Serial </td><td>" + unitcode + "</td> </tr>\
                   <tr> <td> RAM </td><td>" + String(freeHeap) + " bytes</td> </tr>\
                   <tr> <td> File system </td><td>" + String(usedBytes) + " / " + String(totalBytes) + " bytes used</td> </tr>\
                   <tr> <td> MAC Address </td><td>" + macAddress + "</td> </tr>\
                   <tr> <td> Uptime </td><td>" + String(uptime) + " seconds</td> </tr>\
                   <tr> <td> Flash Chip Size </td><td>" + String(flashChipSize / (1024 * 1024)) + " MB</td> </tr>\
                   <tr> <td> Firmware virsion </td><td>" versiondate "</td> </tr>\
-                  <tr> <td> battvoltage </td><td>" + getbattery()/1000 + "</td> </tr>\
+                  <tr> <td> battvoltage </td><td>" + float(getbattery())/1000 + "</td> </tr>\
                   <tr> <td> temperature </td><td>" + (int)temperatureRead() + "</td> </tr>\
                 </tbody>\
     </table>\
@@ -737,7 +747,7 @@ void setup()
             {
 
               // int vIn = adcValue * 22.5;
-              float vIn = (getbattery())/1000;
+              float vIn = float(getbattery())/1000;
               // float vIn = adcValue * 3.3 / 4095.0 * 11.0;
               // // ---- Read Internal Temperature ----
               float temperature = temperatureRead(); // Read internal temperature (in °C)
@@ -757,7 +767,18 @@ void setup()
                  String key = request->getParam("key")->value();
                   Serial.println(key);                  
                   preferences.begin("settings", false);
-                  String value = preferences.getString(key.c_str(), "None");
+                  String defaultans = "None";
+                  //if we dont have it whats the default?
+                  if (key == "AP") {
+                    defaultans = AP;
+                  }
+                  if (key == "startupTune") {
+                    defaultans = startup;
+                  }
+                  if (key == "batteryCalibrationFactor") {
+                    defaultans = String(calibrationFactor,5);
+                  }
+                  String value = preferences.getString(key.c_str(), defaultans);
                   Serial.println(value);
                   preferences.end();
                   json = "{\"result\":\"pass\","
@@ -892,17 +913,15 @@ void setup()
     // Otherwise, redirect to the homepage
     request->redirect("/"); });
 
-  const char *startup4 =
-      "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
-
   if (digitalRead(pgm)) { 
     loadsettings();
-    playRTTTL(startup4);
+    playRTTTL(startup.c_str());
   } else {
     playRTTTL(testbutton);
   }
 
   Serial.println("AP mode started");
+  Serial.println(AP);
   WiFi.mode(WIFI_AP);
 
   delay(100);
