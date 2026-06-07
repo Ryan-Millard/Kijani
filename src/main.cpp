@@ -28,6 +28,7 @@ AsyncWebServer server(80);
 #define servo1Pin 27
 #define servo2Pin 14
 #define Vmod 15
+#define pgm 5 //factory reset pin
 Servo servo1;
 Servo servo2;
 Servo motorA;
@@ -54,7 +55,7 @@ String receivedData = "";
 // const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
 // // const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
 // const char *factoryreset = "we-rock:d=4,o=6,b=45:16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32a#.6,32g#.6,32f#.6,16f.6,32f.6,16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32f#.6,32f.6,32d.6,16d#.6,32d#.6,";
-// const char *testbutton = "SouthAfr:d=16,o=5,b=100:8g,8g,8g,8a,4b,4b,4a,4a,4g,4p,8b,8b,8b,8b,4c6,4c6,8b,8b,4b,4a,4p,8g,8g,8g,8a,4b,4b,4a,4c6,4b,4p,4a,4p,4g,4p,8f#,8g,4a,4g";
+const char *testbutton = "SouthAfr:d=16,o=5,b=100:8g,8g,8g,8a,4b,4b,4a,4a,4g,4p,8b,8b,8b,8b,4c6,4c6,8b,8b,4b,4a,4p,8g,8g,8g,8a,4b,4b,4a,4c6,4b,4p,4a,4p,4g,4p,8f#,8g,4a,4g";
 
 void fatalerror(int errnum)
 {
@@ -397,6 +398,9 @@ void playRTTTL(const char *p)
   }
   ledcAttach(MotorA1, 5000, 8);
 }
+//TODO: do a better analog voltage read to see the battery % and if we are charging. if we are charging disable the motors. maybe make tune instead if the motors are moved
+//TODO: make startup tune a setting as well as the reset tune
+//TODO: add route to play a custom tune
 void setup()
 {
   // setup the debug out comms
@@ -422,6 +426,7 @@ void setup()
   pinMode(MotorA2, OUTPUT);
   pinMode(MotorB1, OUTPUT);
   pinMode(MotorB2, OUTPUT);
+  pinMode(pgm, INPUT);
 
   int adcValue = analogRead(36); // Read the raw ADC value (0-4095)
 
@@ -482,11 +487,19 @@ void setup()
 
   // // Get the MAC address of the ESP32
   // String macAddress = WiFi.macAddress(); // Format: XX:XX:XX:XX:XX:XX
+
+  uint64_t chipid = ESP.getEfuseMac();
+
+  char suffix[7];
+  sprintf(suffix, "%06X", (uint32_t)(chipid & 0xFFFFFF));
+
+  String AP = "MootBot_" + String(suffix);
+
+  // Serial.println(apName);
   // macAddress.replace(":", ""); // Remove colons for a cleaner name (optional)
   // String pin = macAddress.substring(6); // Use the last 4 characters of the MAC
-  // // Create a unique Bluetooth name using the MAC address
-  // String bluetoothName = "MootBot_" + pin;
-
+  // AP = "MootBot_" + pin;
+  Serial.println(AP);
   // Generate a unique PIN from the MAC address
   // int numericPin = 0;
   // for (int i = 0; i < pin.length(); i++) {
@@ -878,7 +891,7 @@ void setup()
     // Otherwise, redirect to the homepage
     request->redirect("/"); });
 
-  loadsettings();
+  
 
   // // const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
   // // TODO: change to rtttle and add as setting so users can change the tone
@@ -890,7 +903,12 @@ void setup()
   const char *startup4 =
       "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
 
-  playRTTTL(startup4);
+  if (digitalRead(pgm)) { 
+    loadsettings();
+    playRTTTL(startup4);
+  } else {
+    playRTTTL(testbutton);
+  }
 
   Serial.println("AP mode started");
   WiFi.mode(WIFI_AP);
