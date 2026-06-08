@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>RTTTL Player</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            font-family: monospace;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+
+        .examples button {
+            margin: 5px;
+        }
+
+        #result {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>RTTTL Tune Player</h1>
+
+    <p>
+        Enter an RTTTL tune and press Play.
+    </p>
+
+    <textarea id="tune">
+Beethoven:d=4,o=5,b=160:c,e,c,g,c,c6,8b,8a,8g,8a,8g,8f,8e,8f,8e,8d,c,e,g,e,c6,g
+    </textarea>
+
+    <br>
+
+    <button onclick="playTune()">Play Tune</button>
+
+    <div class="examples">
+        <h3>Examples</h3>
+
+        <button onclick="loadExample('Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6')">
+            Startup
+        </button>
+
+        <button onclick="loadExample('Scale:d=4,o=5,b=120:c,d,e,f,g,a,b,c6')">
+            Scale
+        </button>
+
+        <button onclick="loadExample('Beep:d=4,o=5,b=120:c,p,c,p,c')">
+            Beep
+        </button>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+
+        function loadExample(tune)
+        {
+            document.getElementById("tune").value = tune;
+        }
+
+        async function playTune()
+        {
+            const tune = document.getElementById("tune").value;
+
+            document.getElementById("result").innerText =
+                "Sending tune...";
+
+            try
+            {
+                const response =
+                    await fetch(
+                        "/playrtttl?tune=" +
+                        encodeURIComponent(tune));
+
+                const text = await response.text();
+
+                document.getElementById("result").innerText =
+                    text;
+            }
+            catch (err)
+            {
+                document.getElementById("result").innerText =
+                    "Failed: " + err;
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>

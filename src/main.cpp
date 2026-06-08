@@ -28,7 +28,7 @@ AsyncWebServer server(80);
 #define servo1Pin 27
 #define servo2Pin 14
 #define Vmod 15
-#define pgm 5 //factory reset pin
+#define pgm 5 // factory reset pin
 Servo servo1;
 Servo servo2;
 Servo motorA;
@@ -52,8 +52,11 @@ float calibrationFactor = 5.02 / 213.0;
 
 boolean paired = false;
 String receivedData = "";
+String pendingTune = "";
+bool playPendingTune = false;
 
 String startup = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
+String test = "Scale:d=4,o=5,b=120:c,d,e,f,g,a,b,c6";
 // // const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
 // const char *factoryreset = "we-rock:d=4,o=6,b=45:16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32a#.6,32g#.6,32f#.6,16f.6,32f.6,16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32f#.6,32f.6,32d.6,16d#.6,32d#.6,";
 const char *testbutton = "SouthAfr:d=16,o=5,b=100:8g,8g,8g,8a,4b,4b,4a,4a,4g,4p,8b,8b,8b,8b,4c6,4c6,8b,8b,4b,4a,4p,8g,8g,8g,8a,4b,4b,4a,4c6,4b,4p,4a,4p,4g,4p,8f#,8g,4a,4g";
@@ -92,13 +95,13 @@ void loadsettings()
   AP = preferences.getString("AP", AP);
   APpass = preferences.getString("APpass", APpass);
   startup = preferences.getString(
-        "startupTune",
-        "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6");
+      "startupTune",
+      "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6");
   String temp = preferences.getString(
-    "batteryCalibrationFactor",
-    "0.02352");
-  calibrationFactor = temp.toFloat();  
-    
+      "batteryCalibrationFactor",
+      "0.02352");
+  calibrationFactor = temp.toFloat();
+
   preferences.end();
 }
 
@@ -210,7 +213,6 @@ void processItem(const String &item)
     Serial.println("Unknown name: " + name);
     Serial.println("got: " + item);
   }
-  
 }
 
 void setMotorSpeed(int speed, int direction)
@@ -235,6 +237,7 @@ void playTone(int frequency, int duration_ms)
     digitalWrite(MotorA1, LOW);
     digitalWrite(MotorA2, HIGH);
     delayMicroseconds(halfPeriod_us);
+    yield(); 
   }
 
   // Stop the motor after the tone
@@ -246,14 +249,16 @@ void playRTTTL(const char *p)
   int default_dur = 4;
   int default_oct = 6;
   int bpm = 63;
-
+  // Serial.println("1");
   // Skip name
   while (*p && *p != ':')
     p++;
   if (*p == ':')
     p++;
   ledcDetach(MotorA1);
+  // Serial.println("2");
   pinMode(MotorA1, OUTPUT);
+  // Serial.println("3");
   // Parse defaults
   while (*p && *p != ':')
   {
@@ -400,23 +405,23 @@ void playRTTTL(const char *p)
     // Serial.print(freq);
     // Serial.print(" ");
     // Serial.println(duration);
-    
+    // Serial.println("5");
     playTone((int)freq, duration);
-
+    // Serial.println("6");
     delay(duration / 10);
   }
+  // Serial.println("7");
   ledcAttach(MotorA1, 5000, 8);
+  // Serial.println("8");
 }
-//TODO: do a better analog voltage read to see the battery % and if we are charging. if we are charging disable the motors. maybe make tune instead if the motors are moved
-//TODO: make startup tune a setting as well as the reset tune
-//TODO: add route to play a custom tune
+
 void setup()
 {
   // setup the debug out comms
   Serial.begin(115200);
   delay(200);
   // Serial.println("1");
-
+  Serial.printf("Reset reason: %d\n", esp_reset_reason());
   Serial.print("\n\nBooting system, ");
   Serial.print(version);
   Serial.print(", ");
@@ -426,7 +431,6 @@ void setup()
   //   Serial.println(getbattery());
   //   delay(1000);
   // }
-  
 
   // init io's
   pinMode(BUILTIN_LED, OUTPUT);
@@ -448,7 +452,7 @@ void setup()
 
   // ---- Print Results ----
   Serial.print("Input Voltage: ");
-  Serial.print(float(getbattery())/1000);
+  Serial.print(float(getbattery()) / 1000);
   Serial.println("V");
 
   Serial.print("Internal Temperature: ");
@@ -688,6 +692,26 @@ void setup()
               String resp = "ver: " version;
 
               request->send(200, "text/html", resp.c_str()); });
+
+  server.on("/playrtttl", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              //TODO: I dont know why the system restarts with this, will look at it later
+    if (!request->hasParam("tune"))
+    {
+        request->send(400, "text/plain", "Missing tune parameter");
+        return;
+    }
+
+    String tune = request->getParam("tune")->value();
+
+    Serial.println("Playing RTTTL:");
+    Serial.println(tune);
+    delay(1000);
+    // playRTTTL(tune.c_str());
+    pendingTune = request->arg("tune");
+    playPendingTune = true;
+    request->send(200, "text/plain", "Playing"); });
+
   server.on("/systeminfo", HTTP_GET, [](AsyncWebServerRequest *request)
             {
               // Get free heap memory
@@ -913,12 +937,16 @@ void setup()
     // Otherwise, redirect to the homepage
     request->redirect("/"); });
 
-  if (digitalRead(pgm)) { 
+  if (digitalRead(pgm))
+  {
     loadsettings();
     playRTTTL(startup.c_str());
-  } else {
+  }
+  else
+  {
     playRTTTL(testbutton);
   }
+
 
   Serial.println("AP mode started");
   Serial.println(AP);
@@ -926,6 +954,8 @@ void setup()
 
   delay(100);
   Serial.println("AP mode set");
+
+
 
   // Configure the IP address
   IPAddress local_ip(10, 10, 10, 10);
@@ -946,20 +976,40 @@ void setup()
   // TODO: impliment factory reset
 
   server.begin();
+  // delay(2000);
+  // playRTTTL("Jingle:d=4,o=5,b=100:8b,8e6,16d6,16c6");
+  // pendingTune = "Jingle:d=4,o=5,b=100:8b,8e6,16d6,16c6";
+  // playPendingTune = true;
 }
 // int speed = 0;
 // bool direction;
 void loop()
 {
+  //TODO: make led heartbeat fast when charging and slow when no connection. On when connecvted and not charging, flicker with commands
 
-  //if we are charging we should not move the motors
-  if (getbattery()>1500) {
+  // if we are charging we should not move the motors
+  if (getbattery() > 1500)
+  {
     ledcWrite(MotorA1, 0);
     ledcWrite(MotorB1, 0);
     digitalWrite(MotorA2, LOW);
     digitalWrite(MotorB2, LOW);
   }
 
+  if (playPendingTune)
+  {
+    playPendingTune = false;
+    Serial.println("Tune contents:");
+    Serial.println(pendingTune);
+
+    Serial.println("Calling playRTTTL");
+
+    playRTTTL(pendingTune.c_str());
+    // delay(2000);
+    // Serial.println("B");
+    // playRTTTL("Jingle:d=4,o=5,b=100:8b,8e6,16d6,16c6");
+    // Serial.println("C");
+  }
 
   // testing the hardware
   //  servo1.write(abs(speed/2));
