@@ -29,6 +29,7 @@ AsyncWebServer server(80);
 #define servo2Pin 14
 #define Vmod 15
 #define pgm 5 // factory reset pin
+#define statled 2 //status led
 Servo servo1;
 Servo servo2;
 Servo motorA;
@@ -61,6 +62,19 @@ String test = "Scale:d=4,o=5,b=120:c,d,e,f,g,a,b,c6";
 // const char *factoryreset = "we-rock:d=4,o=6,b=45:16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32a#.6,32g#.6,32f#.6,16f.6,32f.6,16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32f#.6,32f.6,32d.6,16d#.6,32d#.6,";
 const char *testbutton = "SouthAfr:d=16,o=5,b=100:8g,8g,8g,8a,4b,4b,4a,4a,4g,4p,8b,8b,8b,8b,4c6,4c6,8b,8b,4b,4a,4p,8g,8g,8g,8a,4b,4b,4a,4c6,4b,4p,4a,4p,4g,4p,8f#,8g,4a,4g";
 
+volatile unsigned long ledFlickerUntil = 0;
+enum LedState
+{
+  LED_NO_WIFI,
+  LED_CONNECTED,
+  LED_CHARGING
+};
+
+LedState ledState = LED_NO_WIFI;
+
+unsigned long lastLedChange = 0;
+bool ledOutput = false;
+
 void fatalerror(int errnum)
 {
   while (true)
@@ -75,6 +89,7 @@ void fatalerror(int errnum)
     delay(1000);
   }
 }
+
 
 String Hex2Str(char din)
 {
@@ -127,6 +142,60 @@ int getbattery()
   int adcValue = analogRead(36);
   return adcValue * calibrationFactor * 1000;
 }
+void updateStatusLed()
+{
+  // Determine state
+  if (getbattery() > 4500 )
+  {
+    ledState = LED_CHARGING;
+  }
+  else if (WiFi.status() == WL_CONNECTED)
+  {
+    ledState = LED_CONNECTED;
+  }
+  else
+  {
+    ledState = LED_NO_WIFI;
+  }
+
+  unsigned long now = millis();
+
+  switch (ledState)
+  {
+    case LED_CHARGING:
+      // Fast heartbeat (200ms)
+      if (now - lastLedChange > 200)
+      {
+        lastLedChange = now;
+        ledOutput = !ledOutput;
+        digitalWrite(statled, ledOutput);
+      }
+      break;
+
+    case LED_NO_WIFI:
+      // Slow heartbeat (1000ms)
+      if (now - lastLedChange > 1000)
+      {
+        lastLedChange = now;
+        ledOutput = !ledOutput;
+        digitalWrite(statled, ledOutput);
+      }
+      break;
+
+    case LED_CONNECTED:
+
+      if (millis() < ledFlickerUntil)
+      {
+        digitalWrite(statled, LOW);
+      }
+      else
+      {
+        digitalWrite(statled, HIGH);
+      }
+      break;
+  }
+}
+
 void processItem(const String &item)
 {
   // Split by colon to get name and data
@@ -446,7 +515,8 @@ void setup()
   pinMode(MotorB1, OUTPUT);
   pinMode(MotorB2, OUTPUT);
   pinMode(pgm, INPUT);
-
+  pinMode(statled, OUTPUT);
+  digitalWrite(statled, LOW);
   // // // ---- Read Internal Temperature ----
   float temperature = temperatureRead(); // Read internal temperature (in °C)
 
@@ -535,7 +605,7 @@ void setup()
               // Servo1 0 to 180
               // Servo2 0 to 180
               // boost true/false
-
+              ledFlickerUntil = millis() + 100;
               if (request->hasParam("M1")) {
                 String value = request->arg("M1");
                 int speed = value.toInt();
@@ -648,7 +718,7 @@ void setup()
             {
     AsyncResponseStream *response =
         request->beginResponseStream("application/json");
-
+    ledFlickerUntil = millis() + 100; 
     response->print("{");
 
     response->printf("\"used\":%u,", LittleFS.usedBytes());
@@ -696,6 +766,7 @@ void setup()
   server.on("/playrtttl", HTTP_GET, [](AsyncWebServerRequest *request)
             {
               //TODO: I dont know why the system restarts with this, will look at it later
+              ledFlickerUntil = millis() + 100;
     if (!request->hasParam("tune"))
     {
         request->send(400, "text/plain", "Missing tune parameter");
@@ -716,7 +787,7 @@ void setup()
             {
               // Get free heap memory
               uint32_t freeHeap = ESP.getFreeHeap();
-
+              ledFlickerUntil = millis() + 100;
               // Get SPIFFS total and used bytes
               size_t totalBytes = LittleFS.totalBytes();
               size_t usedBytes = LittleFS.usedBytes();
@@ -769,7 +840,7 @@ void setup()
               request->send(200, "text/html", resp.c_str()); });
   server.on("/quickstatus", HTTP_ANY, [](AsyncWebServerRequest *request)
             {
-
+              ledFlickerUntil = millis() + 100;
               // int vIn = adcValue * 22.5;
               float vIn = float(getbattery())/1000;
               // float vIn = adcValue * 3.3 / 4095.0 * 11.0;
@@ -784,6 +855,7 @@ void setup()
               request->send(200, "application/json", json); });
   server.on("/getsettings", HTTP_ANY, [](AsyncWebServerRequest *request)
             {
+              ledFlickerUntil = millis() + 100;
               String json = "";
               if (request->hasParam("key"))
                 {
@@ -819,6 +891,7 @@ void setup()
 
   server.on("/updatesettings", HTTP_ANY, [](AsyncWebServerRequest *request)
             {
+              ledFlickerUntil = millis() + 100;
               if (request->hasParam("key") && request->hasParam("value"))
               {
 
@@ -985,7 +1058,8 @@ void setup()
 // bool direction;
 void loop()
 {
-  //TODO: make led heartbeat fast when charging and slow when no connection. On when connecvted and not charging, flicker with commands
+  //make led heartbeat fast when charging and slow when no connection. On when connecvted and not charging, flicker with commands
+  updateStatusLed();
 
   // if we are charging we should not move the motors
   if (getbattery() > 1500)
