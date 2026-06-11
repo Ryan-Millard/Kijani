@@ -12,7 +12,7 @@
 #include <Update.h>
 
 #define version "kijani_v3.02b"
-#define versiondate "2025-06-02"
+#define versiondate "2025-06-11"
 
 Preferences preferences;
 AsyncWebServer server(80);
@@ -36,9 +36,6 @@ Servo motorA;
 Servo motorB;
 int minUs = 500;
 int maxUs = 2500;
-// int pos = 0;
-
-// ESP32PWM pwm;
 int freq = 1000;
 
 TaskHandle_t Task1; // motor and pins task
@@ -46,7 +43,6 @@ TaskHandle_t Task2; // radio tasks
 
 float battvoltage = 0;
 float temperature = 0;
-// String unitcode = "000000";
 String AP = "Mootbot"; // default ssid for our AP
 String APpass = "";    // default password for our
 float calibrationFactor = 5.02 / 213.0;
@@ -58,8 +54,6 @@ bool playPendingTune = false;
 
 String startup = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
 String test = "Scale:d=4,o=5,b=120:c,d,e,f,g,a,b,c6";
-// // const char *startup4 = "Jingle:d=4,o=5,b=100:8b,16d6,16c6,8e6";
-// const char *factoryreset = "we-rock:d=4,o=6,b=45:16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32a#.6,32g#.6,32f#.6,16f.6,32f.6,16d#.6,32d#.6,16a#.6,32a#.6,16c.7,32g#.6,16a#.6,32a#.6,16d#.6,32d#.6,16a#.6,32a#.6,32f#.6,32f.6,32d.6,16d#.6,32d#.6,";
 const char *testbutton = "SouthAfr:d=16,o=5,b=100:8g,8g,8g,8a,4b,4b,4a,4a,4g,4p,8b,8b,8b,8b,4c6,4c6,8b,8b,4b,4a,4p,8g,8g,8g,8a,4b,4b,4a,4c6,4b,4p,4a,4p,4g,4p,8f#,8g,4a,4g";
 
 volatile unsigned long ledFlickerUntil = 0;
@@ -106,7 +100,6 @@ String Hex2Str(char din)
 void loadsettings()
 {
   preferences.begin("settings", true);
-  // unitcode = preferences.getString("unitcode", unitcode);
   AP = preferences.getString("AP", AP);
   APpass = preferences.getString("APpass", APpass);
   startup = preferences.getString(
@@ -133,12 +126,10 @@ void storesetting(String value, String key)
 
   // reload all settings to update if changes were made to system settings
   loadsettings();
-  // add to eventlog and auditlog
-  // sendsettings();
   Serial.println("finished stopring");
 }
 int getbattery()
-{
+{  //TODO: make this a rolling buffer and ignore 0 reads
   int adcValue = analogRead(36);
   return adcValue * calibrationFactor * 1000;
 }
@@ -318,16 +309,13 @@ void playRTTTL(const char *p)
   int default_dur = 4;
   int default_oct = 6;
   int bpm = 63;
-  // Serial.println("1");
   // Skip name
   while (*p && *p != ':')
     p++;
   if (*p == ':')
     p++;
   ledcDetach(MotorA1);
-  // Serial.println("2");
   pinMode(MotorA1, OUTPUT);
-  // Serial.println("3");
   // Parse defaults
   while (*p && *p != ':')
   {
@@ -471,17 +459,10 @@ void playRTTTL(const char *p)
       freq /= 2;
       octave++;
     }
-    // Serial.print(freq);
-    // Serial.print(" ");
-    // Serial.println(duration);
-    // Serial.println("5");
     playTone((int)freq, duration);
-    // Serial.println("6");
     delay(duration / 10);
   }
-  // Serial.println("7");
   ledcAttach(MotorA1, 5000, 8);
-  // Serial.println("8");
 }
 
 void setup()
@@ -489,27 +470,20 @@ void setup()
   // setup the debug out comms
   Serial.begin(115200);
   delay(200);
-  // Serial.println("1");
   Serial.printf("Reset reason: %d\n", esp_reset_reason());
   Serial.print("\n\nBooting system, ");
   Serial.print(version);
   Serial.print(", ");
   Serial.println(versiondate);
 
-  // for (;;){
-  //   Serial.println(getbattery());
-  //   delay(1000);
-  // }
-
   // init io's
   pinMode(BUILTIN_LED, OUTPUT);
   pinMode(en8v, OUTPUT);
   pinMode(en5v, OUTPUT);
   pinMode(dvrsleep, OUTPUT);
-  // digitalWrite(Vmod, LOW);
   pinMode(Vmod, OUTPUT);
-  digitalWrite(Vmod, LOW);
-  pinMode(Vmod, INPUT);
+  digitalWrite(Vmod, LOW);  //TODO: add this as a setting output low makes it 6v
+  pinMode(Vmod, INPUT); //inout makes it 5v, this should be the default
   pinMode(MotorA1, OUTPUT);
   pinMode(MotorA2, OUTPUT);
   pinMode(MotorB1, OUTPUT);
@@ -546,30 +520,12 @@ void setup()
   ledcAttach(MotorA1, 5000, 8);
   ledcAttach(MotorB1, 5000, 8);
 
-  // playTone(987, 300);  // 8b: B (987 Hz) for 300 ms
-  // playTone(1175, 150); // 16d6: D6 (1175 Hz) for 150 ms
-  // playTone(1047, 150); // 16c6: C6 (1047 Hz) for 150 ms
-  // playTone(1319, 300); // 8e6: E6 (1319 Hz) for 300 ms
-
   if (!LittleFS.begin(true))
   {
     Serial.println("An Error has occurred while mounting LittleFS");
     fatalerror(1);
   }
 
-  // // rtttl::begin(en8v, startup4);
-
-  // // while (!rtttl::done())
-  // // {
-  // //   rtttl::play();
-  // // }
-  // // rtttl::stop();
-  // // digitalWrite(MotorA1, LOW);
-
-  // // Serial.print("tune done");
-
-  // // Get the MAC address of the ESP32
-  // String macAddress = WiFi.macAddress(); // Format: XX:XX:XX:XX:XX:XX
 
   uint64_t chipid = ESP.getEfuseMac();
 
@@ -577,19 +533,7 @@ void setup()
   sprintf(suffix, "%06X", (uint32_t)(chipid & 0xFFFFFF));
 
   AP = "MootBot_" + String(suffix);
-
-  // Serial.println(apName);
-  // macAddress.replace(":", ""); // Remove colons for a cleaner name (optional)
-  // String pin = macAddress.substring(6); // Use the last 4 characters of the MAC
-  // AP = "MootBot_" + pin;
   Serial.println(AP);
-  // Generate a unique PIN from the MAC address
-  // int numericPin = 0;
-  // for (int i = 0; i < pin.length(); i++) {
-  //   numericPin = numericPin * 16 + (isdigit(pin[i]) ? pin[i] - '0' : toupper(pin[i]) - 'A' + 10);
-  // }
-  // numericPin %= 10000; // Ensure it's a 4-digit PIN
-
   Serial.println("ending setup");
 
   // not sure what this does but its to do with the headers for the html UI
@@ -777,7 +721,7 @@ void setup()
 
     Serial.println("Playing RTTTL:");
     Serial.println(tune);
-    delay(1000);
+    // delay(1000);
     // playRTTTL(tune.c_str());
     pendingTune = request->arg("tune");
     playPendingTune = true;
@@ -815,7 +759,7 @@ void setup()
                 case FM_SLOW_READ: flashChipMode = "SLOW_READ"; break;
                 default: flashChipMode = "UNKNOWN"; break;
               }
-              //<tr> <td> UnitCode/Serial </td><td>" + unitcode + "</td> </tr>
+              
               String resp = "<div style='margin-left:auto; margin-right:auto;'>\
                 <table id='wifi-settings-table'>\
                   <thead>\
@@ -841,9 +785,7 @@ void setup()
   server.on("/quickstatus", HTTP_ANY, [](AsyncWebServerRequest *request)
             {
               ledFlickerUntil = millis() + 100;
-              // int vIn = adcValue * 22.5;
               float vIn = float(getbattery())/1000;
-              // float vIn = adcValue * 3.3 / 4095.0 * 11.0;
               // // ---- Read Internal Temperature ----
               float temperature = temperatureRead(); // Read internal temperature (in °C)
               String json = "{\"result\":\"pass\","
@@ -851,7 +793,6 @@ void setup()
               "\"temperature\":" + String(temperature) +
               "}";
                 
-              // Serial.println(json);
               request->send(200, "application/json", json); });
   server.on("/getsettings", HTTP_ANY, [](AsyncWebServerRequest *request)
             {
@@ -901,8 +842,6 @@ void setup()
                 storesetting(value, key);
 
                 request->send(200, "text/plain", "Updated successfully");
-                // vTaskDelay(1000);
-                // ESP.restart();
               }
               else
               {
@@ -910,7 +849,6 @@ void setup()
                 Serial.println("updatefailed: ");
                 for (uint8_t i = 0; i < request->args(); i++)
                 {
-                  // AsyncWebParameter *p = request->getParam(i);
                   const AsyncWebParameter *p = request->getParam(i);
                   Serial.print(p->name());
                   Serial.print(": ");
@@ -1044,31 +982,22 @@ void setup()
   {
     fatalerror(5);
   }
-  // dnsServer.start(53, "*", WiFi.softAPIP());
-
-  // TODO: impliment factory reset
 
   server.begin();
-  // delay(2000);
-  // playRTTTL("Jingle:d=4,o=5,b=100:8b,8e6,16d6,16c6");
-  // pendingTune = "Jingle:d=4,o=5,b=100:8b,8e6,16d6,16c6";
-  // playPendingTune = true;
 }
-// int speed = 0;
-// bool direction;
 void loop()
 {
   //make led heartbeat fast when charging and slow when no connection. On when connecvted and not charging, flicker with commands
   updateStatusLed();
 
-  // if we are charging we should not move the motors
-  if (getbattery() > 1500)
-  {
-    ledcWrite(MotorA1, 0);
-    ledcWrite(MotorB1, 0);
-    digitalWrite(MotorA2, LOW);
-    digitalWrite(MotorB2, LOW);
-  }
+  // TODO: if we are charging we should not move the motors, do after sorting our battery read
+  // if (getbattery() > 1500)
+  // {
+  //   ledcWrite(MotorA1, 0);
+  //   ledcWrite(MotorB1, 0);
+  //   digitalWrite(MotorA2, LOW);
+  //   digitalWrite(MotorB2, LOW);
+  // }
 
   if (playPendingTune)
   {
@@ -1079,10 +1008,7 @@ void loop()
     Serial.println("Calling playRTTTL");
 
     playRTTTL(pendingTune.c_str());
-    // delay(2000);
-    // Serial.println("B");
-    // playRTTTL("Jingle:d=4,o=5,b=100:8b,8e6,16d6,16c6");
-    // Serial.println("C");
+
   }
 
   // testing the hardware
