@@ -11,7 +11,7 @@
 #include <ESPAsyncWebServer.h>
 #include <Update.h>
 
-#define version "kijani_v3.02b"
+#define version "kijani_v3.03b"
 #define versiondate "2025-06-11"
 
 Preferences preferences;
@@ -709,7 +709,6 @@ void setup()
 
   server.on("/playrtttl", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-              //TODO: I dont know why the system restarts with this, will look at it later
               ledFlickerUntil = millis() + 100;
     if (!request->hasParam("tune"))
     {
