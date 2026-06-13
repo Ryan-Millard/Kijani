@@ -529,8 +529,8 @@ void setup()
 
   uint64_t chipid = ESP.getEfuseMac();
 
-  char suffix[7];
-  sprintf(suffix, "%06X", (uint32_t)(chipid & 0xFFFFFF));
+  char suffix[12];
+  sprintf(suffix, "%06X", (uint64_t)(chipid & 0xFFFFFFFFFFFF));
 
   AP = "MootBot_" + String(suffix);
   Serial.println(AP);
@@ -739,8 +739,8 @@ void setup()
               // String macAddress = WiFi.macAddress();
                 uint64_t chipid = ESP.getEfuseMac();
 
-              char suffix[7];
-              sprintf(suffix, "%06X", (uint32_t)(chipid & 0xFFFFFF));
+              char suffix[12];
+              sprintf(suffix, "%06X", (uint64_t)(chipid & 0xFFFFFFFFFFFF));
               String macAddress = String(suffix);
               // Get uptime
               uint32_t uptime = millis() / 1000;
