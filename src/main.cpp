@@ -1,8 +1,11 @@
-// to start a quick htp server go yto the data folder and type
+// Kijani ESP32 Robot prokect
+// see https://github.com/Ithegi/Kijani for more information
+
+// to start a quick htpp server go to the data folder and type
 // python3 -m http.server
 
 #include <Arduino.h>
-#include <NonBlockingRtttl.h>
+// #include <NonBlockingRtttl.h>
 #include "driver/rtc_io.h"
 #include <Preferences.h>
 #include <ESP32Servo.h>
@@ -12,7 +15,7 @@
 #include <Update.h>
 
 #define version "kijani_v3.03b"
-#define versiondate "2025-06-11"
+#define versiondate "2026-06-11"
 
 Preferences preferences;
 AsyncWebServer server(80);
